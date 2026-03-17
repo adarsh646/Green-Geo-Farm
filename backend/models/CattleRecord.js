@@ -27,6 +27,8 @@ const cattleRecordSchema = new mongoose.Schema({
   Walking_Time: { type: Number },
   
   // Feeding
+  Feed_Type: { type: String }, // Comma separated: "Corn (5kg), Hay (2kg)"
+  Total_Feed_Weight: { type: Number }, // Sum of weights in kg
   Feeding_Time: { type: Number },
   Number_of_Feeding_Visits: { type: Number },
   Water_Intake: { type: Number },

@@ -56,11 +56,13 @@ const CattleList = () => {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/${id}`);
-      fetchCattle();
-    } catch (err) {
-      alert('Error deleting cattle');
+    if (window.confirm('Are you sure you want to delete this cattle record?')) {
+      try {
+        await axios.delete(`${API_URL}/${id}`);
+        fetchCattle();
+      } catch (err) {
+        alert('Error deleting cattle');
+      }
     }
   };
 

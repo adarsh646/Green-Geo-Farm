@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save, ClipboardList, Activity, Milk, ShoppingBasket, Heart, Thermometer, MapPin, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, ClipboardList, Activity, Milk, ShoppingBasket, Heart, Thermometer, MapPin, AlertTriangle, X } from 'lucide-react';
 import '../CattleManagement.css';
 
 const CattleRecordForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cattleId, tagNumber, breed, age } = location.state || {};
+
+  const [feedStocks, setFeedStocks] = useState([]);
+  const [selectedFeedType, setSelectedFeedType] = useState('');
+  const [feedWeightTaken, setFeedWeightTaken] = useState('');
+  const [selectedFeedsList, setSelectedFeedsList] = useState([]);
 
   const [formData, setFormData] = useState({
     cattleId: cattleId || '',
@@ -58,6 +63,19 @@ const CattleRecordForm = () => {
     Lameness_Risk: 'Low'
   });
 
+  useEffect(() => {
+    fetchFeedStocks();
+  }, []);
+
+  const fetchFeedStocks = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/feed-stock');
+      setFeedStocks(response.data);
+    } catch (error) {
+      console.error('Error fetching feed stocks:', error);
+    }
+  };
+
   const API_URL = 'http://localhost:5000/api/cattle-records';
 
   const handleChange = (e) => {
@@ -76,10 +94,70 @@ const CattleRecordForm = () => {
     });
   };
 
+  const handleAddFeedToList = () => {
+    if (!selectedFeedType || !feedWeightTaken) {
+      alert('Please select a feed type and enter weight');
+      return;
+    }
+    
+    const weight = parseInt(feedWeightTaken);
+    if (isNaN(weight) || weight <= 0) {
+      alert('Please enter a valid weight');
+      return;
+    }
+
+    const feedStock = feedStocks.find(f => f.feedType === selectedFeedType);
+    if (feedStock && feedStock.weight < weight) {
+      alert(`Insufficient stock for ${selectedFeedType}. Available: ${feedStock.weight}kg`);
+      return;
+    }
+
+    // Check if already in list
+    if (selectedFeedsList.some(item => item.feedType === selectedFeedType)) {
+      alert(`${selectedFeedType} is already in the list. Delete it first if you want to change the weight.`);
+      return;
+    }
+
+    setSelectedFeedsList([...selectedFeedsList, { feedType: selectedFeedType, weight }]);
+    setSelectedFeedType('');
+    setFeedWeightTaken('');
+  };
+
+  const handleRemoveFeedFromList = (feedType) => {
+    setSelectedFeedsList(selectedFeedsList.filter(item => item.feedType !== feedType));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(API_URL, formData);
+      // Create comma separated feed string: "Corn (5kg), Hay (2kg)"
+      const feedString = selectedFeedsList.map(item => `${item.feedType} (${item.weight}kg)`).join(', ');
+      
+      // Calculate total weight
+      const totalWeight = selectedFeedsList.reduce((sum, item) => sum + item.weight, 0);
+      
+      const finalFormData = {
+        ...formData,
+        Feed_Type: feedString,
+        Total_Feed_Weight: totalWeight
+      };
+
+      // 1. Save Cattle Record
+      await axios.post(API_URL, finalFormData);
+      
+      // 2. Dispense all feeds in the list
+      for (const item of selectedFeedsList) {
+        try {
+          await axios.put('http://localhost:5000/api/feed-stock/dispense', {
+            feedType: item.feedType,
+            weight: item.weight
+          });
+        } catch (dispenseErr) {
+          console.error(`Error dispensing ${item.feedType}:`, dispenseErr);
+          // We continue but notify the user
+        }
+      }
+
       alert('Cattle record saved successfully!');
       navigate('/cattle-management');
     } catch (err) {
@@ -176,6 +254,62 @@ const CattleRecordForm = () => {
               <ShoppingBasket size={20} />
               <h2>Feeding & Digestion</h2>
             </div>
+            
+            <div className="feed-selection-box" style={{backgroundColor: '#f0f9ff', padding: '20px', borderRadius: '12px', marginBottom: '20px'}}>
+              <div className="form-row" style={{marginBottom: '15px'}}>
+                <div className="form-group">
+                  <label>Feed Type Selection</label>
+                  <select 
+                    value={selectedFeedType} 
+                    onChange={(e) => setSelectedFeedType(e.target.value)}
+                  >
+                    <option value="">Select Feed Type</option>
+                    {feedStocks.map((stock) => (
+                      <option key={stock._id} value={stock.feedType}>
+                        {stock.feedType} (Avail: {stock.weight} kg)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Weight Taken (kg)</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="1" 
+                    value={feedWeightTaken} 
+                    onChange={(e) => setFeedWeightTaken(e.target.value)} 
+                    placeholder="e.g. 5"
+                  />
+                </div>
+                <div className="form-group" style={{justifyContent: 'flex-end', display: 'flex', paddingBottom: '5px'}}>
+                  <button type="button" onClick={handleAddFeedToList} className="add-feed-btn" style={{backgroundColor: '#2d5a3f', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600'}}>
+                    Add Feed
+                  </button>
+                </div>
+              </div>
+
+              {selectedFeedsList.length > 0 && (
+                <div className="selected-feeds-list" style={{marginTop: '15px', borderTop: '1px solid #bae6fd', paddingTop: '15px'}}>
+                  <h3 style={{fontSize: '14px', color: '#0369a1', marginBottom: '10px'}}>Selected Feeds List:</h3>
+                  <div className="feed-items-grid" style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
+                    {selectedFeedsList.map((item, index) => (
+                      <div key={index} className="feed-item-tag" style={{backgroundColor: 'white', padding: '8px 12px', borderRadius: '20px', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                        <span style={{fontWeight: '600', color: '#0369a1'}}>{item.feedType}: {item.weight}kg</span>
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveFeedFromList(item.feedType)}
+                          style={{background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px'}}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>Feeding Time (hrs)</label>

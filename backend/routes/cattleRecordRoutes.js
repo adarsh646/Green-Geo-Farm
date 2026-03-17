@@ -15,7 +15,24 @@ router.get('/', async (req, res) => {
 // Get records for a specific cow
 router.get('/cattle/:cattleId', async (req, res) => {
   try {
-    const records = await CattleRecord.find({ cattleId: req.params.cattleId });
+    const records = await CattleRecord.find({ cattleId: req.params.cattleId }).sort({ createdAt: 1 });
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get weekly report data for a specific cow
+router.get('/weekly-report/:cattleId', async (req, res) => {
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    const records = await CattleRecord.find({
+      cattleId: req.params.cattleId,
+      createdAt: { $gte: oneWeekAgo }
+    }).sort({ createdAt: 1 });
+    
     res.json(records);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, X, Search, ArrowLeft, Info, Calendar, Activity, Scale, User as UserIcon } from 'lucide-react';
+import { Plus, X, Search, ArrowLeft, Info, Calendar, Activity, Scale, User as UserIcon, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import '../CattleManagement.css';
 
@@ -8,6 +8,7 @@ const CattleManagement = () => {
   const [cattle, setCattle] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedCattle, setSelectedCattle] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
@@ -80,6 +81,18 @@ const CattleManagement = () => {
       fetchCattle();
     } catch (err) {
       alert('Error adding cattle');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      setSelectedCattle(null);
+      setShowDeleteConfirm(false);
+      fetchCattle();
+    } catch (err) {
+      console.error('Error deleting cattle');
+      alert('Error deleting cattle. Please try again.');
     }
   };
 
@@ -283,7 +296,53 @@ const CattleManagement = () => {
             >
               Add Daily Record
             </button>
+            <button 
+              className="btn-submit-cattle" 
+              style={{ width: '100%', marginBottom: '12px', backgroundColor: '#3b82f6' }}
+              onClick={() => navigate(`/cattle-report/${selectedCattle._id}`)}
+            >
+              View Weekly Report
+            </button>
+            <button 
+              className="btn-submit-cattle" 
+              style={{ width: '100%', marginBottom: '12px', backgroundColor: '#ef4444' }}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 size={20} style={{ marginRight: '8px' }} />
+              Delete Cattle Record
+            </button>
             <button className="btn-close-detail" style={{ marginTop: 0 }} onClick={() => setSelectedCattle(null)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" style={{ zIndex: 3000 }}>
+          <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <div className="delete-confirm-icon" style={{ color: '#ef4444', marginBottom: '20px' }}>
+              <Trash2 size={48} />
+            </div>
+            <h2 style={{ marginBottom: '12px' }}>Delete Cattle?</h2>
+            <p style={{ color: '#64748b', marginBottom: '30px' }}>
+              Are you sure you want to delete cattle <strong>{selectedCattle?.tagNumber}</strong>? This action cannot be undone.
+            </p>
+            <div className="form-row" style={{ gap: '12px' }}>
+              <button 
+                className="btn-close-detail" 
+                style={{ marginTop: 0, flex: 1 }} 
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-submit-cattle" 
+                style={{ marginTop: 0, flex: 1, backgroundColor: '#ef4444' }}
+                onClick={() => handleDelete(selectedCattle?._id)}
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

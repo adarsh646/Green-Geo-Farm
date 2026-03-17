@@ -10,6 +10,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import ManageRanchers from './pages/ManageRanchers';
 import CattleManagement from './pages/CattleManagement';
 import CattleRecordForm from './pages/CattleRecordForm';
+import CattleReport from './pages/CattleReport';
+import FeedStock from './pages/FeedStock';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -64,6 +66,14 @@ function App() {
             <Route 
               path="/cattle-records" 
               element={isAuthenticated ? <CattleRecordForm /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/cattle-report/:id" 
+              element={isAuthenticated ? <CattleReport /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/feed-stock" 
+              element={isAuthenticated ? <FeedStock /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/manage-ranchers" 

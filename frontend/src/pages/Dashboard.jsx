@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
-  Bell, User, Plus, Milk, Calendar, 
+  Bell, User, Plus, Milk, Calendar, Package,
   Settings, BarChart3, ChevronRight 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,16 +11,39 @@ import '../Dashboard.css';
 const Dashboard = () => {
   const username = localStorage.getItem('username') || 'Rancher';
   const navigate = useNavigate();
+  const [feedStockPercentage, setFeedStockPercentage] = useState(0);
+
+  useEffect(() => {
+    const fetchFeedStock = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/feed-stock');
+        const feedStocks = response.data;
+        if (feedStocks.length > 0) {
+          const totalPercentage = feedStocks.reduce((acc, curr) => {
+            const percentage = (curr.weight / curr.maxCapacity) * 100;
+            return acc + percentage;
+          }, 0);
+          setFeedStockPercentage(Math.round(totalPercentage / feedStocks.length));
+        } else {
+          setFeedStockPercentage(0);
+        }
+      } catch (error) {
+        console.error('Error fetching feed stock:', error);
+      }
+    };
+    fetchFeedStock();
+  }, []);
 
   const stats = [
     { label: 'Avg Milk/Cow', value: '5.2L', trend: '+3.1%' },
     { label: 'Health Alerts', value: '3', trend: 'Active', trendType: 'alert' },
-    { label: 'Feed Stock', value: '78%', trend: 'Good' },
+    { label: 'Feed Stock', value: `${feedStockPercentage}%`, trend: feedStockPercentage > 50 ? 'Good' : 'Low', id: 'feed-stock' },
     { label: 'Revenue', value: '$12.4K', trend: '+8.2%' },
   ];
 
   const managementItems = [
-    { title: 'Cattle', desc: 'Manage herd, health & breeding records', icon: <Plus size={24} />, color: '#e8f5e9' },
+    { title: 'Cattle', desc: 'Manage herd, health & breeding records', icon: <Plus size={24} />, color: '#e8f5e9', link: '/cattle-management' },
+    { title: 'Feed Stock', desc: 'Update feed inventory', icon: <Package size={24} />, color: '#fff9c4', link: '/feed-stock' },
     { title: 'Milk Records', desc: 'Track daily production & quality', icon: <Milk size={24} />, color: '#fff3e0' },
     { title: 'Events', desc: 'Breeding, vaccination & farm tasks', icon: <Calendar size={24} />, color: '#e3f2fd' },
     { title: 'Farm Setup', desc: 'Manage workers, pens & equipment', icon: <Settings size={24} />, color: '#f3e5f5' },
@@ -49,7 +73,11 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="stats-grid">
           {stats.map((stat, i) => (
-            <div key={i} className="stat-card">
+            <div 
+              key={i} 
+              className={`stat-card ${stat.id === 'feed-stock' ? 'clickable-stat' : ''}`}
+              onClick={() => stat.id === 'feed-stock' && navigate('/feed-stock')}
+            >
               <span className="stat-label">{stat.label}</span>
               <div className="stat-value-row">
                 <span className="stat-value">{stat.value}</span>
@@ -71,7 +99,7 @@ const Dashboard = () => {
               <div 
                 key={i} 
                 className="manage-tile" 
-                onClick={() => item.title === 'Cattle' ? navigate('/cattle-management') : null}
+                onClick={() => item.link ? navigate(item.link) : null}
               >
                 <div className="manage-icon" style={{ backgroundColor: item.color }}>
                   {item.icon}
