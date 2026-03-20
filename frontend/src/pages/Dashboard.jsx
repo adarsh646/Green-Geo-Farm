@@ -12,12 +12,13 @@ const Dashboard = () => {
   const username = localStorage.getItem('username') || 'Rancher';
   const navigate = useNavigate();
   const [feedStockPercentage, setFeedStockPercentage] = useState(0);
+  const [farmAssets, setFarmAssets] = useState([]);
 
   useEffect(() => {
-    const fetchFeedStock = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/feed-stock');
-        const feedStocks = response.data;
+        const feedResponse = await axios.get('http://localhost:5000/api/feed-stock');
+        const feedStocks = feedResponse.data;
         if (feedStocks.length > 0) {
           const totalPercentage = feedStocks.reduce((acc, curr) => {
             const percentage = (curr.weight / curr.maxCapacity) * 100;
@@ -27,18 +28,26 @@ const Dashboard = () => {
         } else {
           setFeedStockPercentage(0);
         }
+
+        const assetsResponse = await axios.get('http://localhost:5000/api/farm-assets');
+        setFarmAssets(assetsResponse.data);
       } catch (error) {
-        console.error('Error fetching feed stock:', error);
+        console.error('Error fetching dashboard data:', error);
       }
     };
-    fetchFeedStock();
+    fetchData();
   }, []);
+
+  const assetsNeedingService = farmAssets.filter(asset => {
+    if (asset.status === 'Maintenance Required') return true;
+    if (asset.nextServiceDate && new Date(asset.nextServiceDate) < new Date()) return true;
+    return false;
+  });
 
   const stats = [
     { label: 'Avg Milk/Cow', value: '5.2L', trend: '+3.1%' },
     { label: 'Health Alerts', value: '3', trend: 'Active', trendType: 'alert' },
     { label: 'Feed Stock', value: `${feedStockPercentage}%`, trend: feedStockPercentage > 50 ? 'Good' : 'Low', id: 'feed-stock' },
-    { label: 'Revenue', value: '$12.4K', trend: '+8.2%' },
   ];
 
   const managementItems = [
@@ -46,7 +55,7 @@ const Dashboard = () => {
     { title: 'Feed Stock', desc: 'Update feed inventory', icon: <Package size={24} />, color: '#fff9c4', link: '/feed-stock' },
     { title: 'Milk Records', desc: 'Track daily production & quality', icon: <Milk size={24} />, color: '#fff3e0' },
     { title: 'Events', desc: 'Breeding, vaccination & farm tasks', icon: <Calendar size={24} />, color: '#e3f2fd' },
-    { title: 'Farm Setup', desc: 'Manage workers, pens & equipment', icon: <Settings size={24} />, color: '#f3e5f5' },
+    { title: 'Farm Assets', desc: 'Manage workers, pens & equipment', icon: <Settings size={24} />, color: '#f3e5f5', link: '/farm-assets', alert: assetsNeedingService.length > 0 ? `${assetsNeedingService.length} Needs Service` : null },
     { title: 'Reports', desc: 'Financial & production analytics', icon: <BarChart3 size={24} />, color: '#ffebee' },
   ];
 
@@ -105,7 +114,10 @@ const Dashboard = () => {
                   {item.icon}
                 </div>
                 <div className="manage-text">
-                  <h3>{item.title}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3>{item.title}</h3>
+                    {item.alert && <span className="alert-badge-tile">{item.alert}</span>}
+                  </div>
                   <p>{item.desc}</p>
                 </div>
                 <ChevronRight className="chevron" size={20} />

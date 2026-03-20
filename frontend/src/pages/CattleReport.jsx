@@ -5,7 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts';
-import { ArrowLeft, Download, FileText, Activity, Milk, Heart, Calendar, ShoppingBasket } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Activity, Milk, Heart, Calendar, ShoppingBasket, Thermometer } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -200,6 +200,24 @@ const CattleReport = () => {
                   </ResponsiveContainer>
                 </div>
               </div>
+
+              {/* THI Index Chart */}
+              <div className="chart-card">
+                <h3><Thermometer size={18} /> Heat Stress: THI Index</h3>
+                <div className="chart-wrapper">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={records}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+                      <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+                      <Tooltip 
+                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
+                      />
+                      <Line type="monotone" dataKey="THI_Index" name="THI Index" stroke="#f59e0b" strokeWidth={3} dot={{r: 4, fill: '#f59e0b'}} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           )}
 
@@ -214,16 +232,24 @@ const CattleReport = () => {
                   <thead>
                     <tr style={{backgroundColor: '#f8fafc', color: '#64748b'}}>
                       <th style={{padding: '12px', borderBottom: '1px solid #f1f5f9'}}>Date</th>
-                      <th style={{padding: '12px', borderBottom: '1px solid #f1f5f9'}}>Feed Consumption</th>
-                      <th style={{padding: '12px', borderBottom: '1px solid #f1f5f9'}}>Total Weight</th>
+                      <th style={{padding: '12px', borderBottom: '1px solid #f1f5f9'}}>Feed & Consumption Details</th>
+                      <th style={{padding: '12px', borderBottom: '1px solid #f1f5f9'}}>Environmental Details</th>
                     </tr>
                   </thead>
                   <tbody>
                     {records.map((record, index) => (
                       <tr key={index} style={{borderBottom: '1px solid #f1f5f9'}}>
                         <td style={{padding: '12px', fontWeight: '600'}}>{record.displayDate}</td>
-                        <td style={{padding: '12px'}}>{record.Feed_Type || 'Not recorded'}</td>
-                        <td style={{padding: '12px'}}>{record.Total_Feed_Weight ? `${record.Total_Feed_Weight} kg` : '-'}</td>
+                        <td style={{padding: '12px'}}>
+                          <div style={{fontWeight: '600'}}>{record.Feed_Type || 'Not recorded'}</div>
+                          <div style={{fontSize: '12px', color: '#64748b', marginTop: '4px'}}>
+                            Total Weight: {record.Total_Feed_Weight ? `${record.Total_Feed_Weight} kg` : '-'}
+                          </div>
+                        </td>
+                        <td style={{padding: '12px'}}>
+                          <div>Water pH: {record.Water_pH || '-'}</div>
+                          <div style={{marginTop: '4px'}}>Cleanliness: <span style={{fontWeight: '600'}}>{record.Cleanliness || '-'}</span></div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

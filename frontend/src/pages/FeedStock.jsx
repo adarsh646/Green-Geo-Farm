@@ -236,8 +236,8 @@ const FeedStock = () => {
                 required
               />
             </div>
-            
             <div className="button-group">
+            
               <button type="submit" className="save-btn">
                 <Save size={20} /> Update {selectedFeed || 'Feed'} Weight
               </button>

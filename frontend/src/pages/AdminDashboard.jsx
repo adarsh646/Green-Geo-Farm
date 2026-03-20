@@ -12,21 +12,25 @@ const AdminDashboard = () => {
   const [dbRanchers, setDbRanchers] = useState([]);
   const [dbCattle, setDbCattle] = useState([]);
   const [feedStockPercentage, setFeedStockPercentage] = useState(0);
+  const [farmAssets, setFarmAssets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const RANCHERS_API = 'http://localhost:5000/api/users/ranchers';
   const CATTLE_API = 'http://localhost:5000/api/cattle';
   const FEED_STOCK_API = 'http://localhost:5000/api/feed-stock';
+  const FARM_ASSETS_API = 'http://localhost:5000/api/farm-assets';
 
   const fetchData = async () => {
     try {
-      const [ranchersRes, cattleRes, feedStockRes] = await Promise.all([
+      const [ranchersRes, cattleRes, feedStockRes, assetsRes] = await Promise.all([
         axios.get(RANCHERS_API),
         axios.get(CATTLE_API),
-        axios.get(FEED_STOCK_API)
+        axios.get(FEED_STOCK_API),
+        axios.get(FARM_ASSETS_API)
       ]);
       setDbRanchers(ranchersRes.data);
       setDbCattle(cattleRes.data);
+      setFarmAssets(assetsRes.data);
 
       const feedStocks = feedStockRes.data;
       if (feedStocks.length > 0) {
@@ -50,6 +54,12 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
+  const assetsNeedingService = farmAssets.filter(asset => {
+    if (asset.status === 'Maintenance Required') return true;
+    if (asset.nextServiceDate && new Date(asset.nextServiceDate) < new Date()) return true;
+    return false;
+  });
+
   const stats = [
     { label: 'Total Ranchers', value: dbRanchers.length.toString(), trend: '+12%', icon: <Users size={20} />, id: 'rancher-mgmt' },
     { label: 'Total Cattle', value: dbCattle.length.toString(), trend: '+5.4%', icon: <Activity size={20} /> },
@@ -65,6 +75,7 @@ const AdminDashboard = () => {
     { title: 'Feed Stock', desc: 'Manage feed types and inventory', icon: <Package size={24} />, color: '#fff9c4', link: '/feed-stock' },
     { title: 'Milk Analytics', desc: 'Global production & quality trends', icon: <Milk size={24} />, color: '#fff3e0' },
     { title: 'Global Events', desc: 'System-wide vaccinations & tasks', icon: <Calendar size={24} />, color: '#e3f2fd' },
+    { title: 'Farm Assets', desc: 'Manage workers, pens & equipment', icon: <Settings size={24} />, color: '#f3e5f5', link: '/farm-assets', alert: assetsNeedingService.length > 0 ? `${assetsNeedingService.length} Needs Service` : null },
     { title: 'System Reports', desc: 'Financial & production analytics', icon: <BarChart3 size={24} />, color: '#ffebee' },
   ];
 
@@ -129,7 +140,10 @@ const AdminDashboard = () => {
                   {item.icon}
                 </div>
                 <div className="manage-text">
-                  <h3>{item.title}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3>{item.title}</h3>
+                    {item.alert && <span className="alert-badge-tile">{item.alert}</span>}
+                  </div>
                   <p>{item.desc}</p>
                 </div>
                 <ChevronRight className="chevron" size={20} />

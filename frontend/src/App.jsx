@@ -13,6 +13,9 @@ import CattleRecordForm from './pages/CattleRecordForm';
 import CattleReport from './pages/CattleReport';
 import FeedStock from './pages/FeedStock';
 import LandingPage from './pages/LandingPage';
+import ManagementModule from './pages/ManagementModule';
+import FarmAssets from './pages/FarmAssets';
+import Shop from './pages/Shop';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 
@@ -47,6 +50,8 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/management" element={<ManagementModule />} />
+            <Route path="/shop" element={<Shop />} />
             <Route path="/login" element={<Login setAuth={handleAuth} />} />
             <Route path="/signup" element={<Signup />} />
             <Route 
@@ -74,6 +79,10 @@ function App() {
             <Route 
               path="/feed-stock" 
               element={isAuthenticated ? <FeedStock /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/farm-assets" 
+              element={isAuthenticated ? <FarmAssets /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/manage-ranchers" 

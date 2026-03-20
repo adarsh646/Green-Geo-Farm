@@ -32,12 +32,14 @@ const cattleRecordSchema = new mongoose.Schema({
   Feeding_Time: { type: Number },
   Number_of_Feeding_Visits: { type: Number },
   Water_Intake: { type: Number },
+  Water_pH: { type: Number },
   Rumination_Time: { type: Number },
   
   // Health
   Body_Temperature: { type: Number },
   Heart_Rate: { type: Number },
   Respiration_Rate: { type: Number },
+  Cleanliness: { type: String, enum: ['Not Cleaned', 'Average', 'Good'] },
   
   // Reproduction
   Estrus_Activity_Index: { type: Number },

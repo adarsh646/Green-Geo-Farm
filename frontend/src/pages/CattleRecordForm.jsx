@@ -36,12 +36,14 @@ const CattleRecordForm = () => {
     Feeding_Time: '',
     Number_of_Feeding_Visits: '',
     Water_Intake: '',
+    Water_pH: '',
     Rumination_Time: '',
     
     // Health
     Body_Temperature: '',
     Heart_Rate: '',
     Respiration_Rate: '',
+    Cleanliness: 'Average',
     
     // Reproduction
     Estrus_Activity_Index: '',
@@ -88,6 +90,16 @@ const CattleRecordForm = () => {
         const am = parseFloat(name === 'Milk_AM' ? value : prev.Milk_AM) || 0;
         const pm = parseFloat(name === 'Milk_PM' ? value : prev.Milk_PM) || 0;
         newData.Total_Milk = (am + pm).toFixed(2);
+      }
+
+      // Auto-calculate THI Index
+      if (name === 'Ambient_Temperature' || name === 'Humidity') {
+        const temp = parseFloat(name === 'Ambient_Temperature' ? value : prev.Ambient_Temperature) || 0;
+        const rh = parseFloat(name === 'Humidity' ? value : prev.Humidity) || 0;
+        
+        // THI Formula: (0.8 × Tdb) + (RH/100) × (Tdb - 14.4) + 46.4
+        const thi = (0.8 * temp) + (rh / 100) * (temp - 14.4) + 46.4;
+        newData.THI_Index = thi.toFixed(1);
       }
       
       return newData;
@@ -326,6 +338,10 @@ const CattleRecordForm = () => {
                 <input type="number" step="0.1" name="Water_Intake" value={formData.Water_Intake} onChange={handleChange} />
               </div>
               <div className="form-group">
+                <label>Water pH</label>
+                <input type="number" step="0.1" name="Water_pH" value={formData.Water_pH} onChange={handleChange} placeholder="e.g. 7.0" />
+              </div>
+              <div className="form-group">
                 <label>Rumination (hrs)</label>
                 <input type="number" step="0.1" name="Rumination_Time" value={formData.Rumination_Time} onChange={handleChange} />
               </div>
@@ -351,6 +367,18 @@ const CattleRecordForm = () => {
                 <label>Respiration (bpm)</label>
                 <input type="number" name="Respiration_Rate" value={formData.Respiration_Rate} onChange={handleChange} />
               </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Cleanliness</label>
+                <select name="Cleanliness" value={formData.Cleanliness} onChange={handleChange}>
+                  <option value="Not Cleaned">Not Cleaned</option>
+                  <option value="Average">Average</option>
+                  <option value="Good">Good</option>
+                </select>
+              </div>
+              <div className="form-group"></div>
+              <div className="form-group"></div>
             </div>
           </section>
 
@@ -417,7 +445,7 @@ const CattleRecordForm = () => {
               </div>
               <div className="form-group">
                 <label>THI Index</label>
-                <input type="number" step="0.1" name="THI_Index" value={formData.THI_Index} onChange={handleChange} />
+                <input type="number" step="0.1" name="THI_Index" value={formData.THI_Index} readOnly className="read-only-input" />
               </div>
             </div>
           </section>

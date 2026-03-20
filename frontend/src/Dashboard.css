@@ -205,6 +205,16 @@
   margin-bottom: 4px;
 }
 
+.alert-badge-tile {
+  background-color: #ef4444;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .manage-text p {
   color: #666;
   font-size: 14px;

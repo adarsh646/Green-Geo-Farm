@@ -22,11 +22,13 @@ const cattleRecordRoutes = require('./routes/cattleRecordRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const feedStockRoutes = require('./routes/feedStockRoutes');
+const farmAssetRoutes = require('./routes/farmAssetRoutes');
 app.use('/api/cattle', cattleRoutes);
 app.use('/api/cattle-records', cattleRecordRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/feed-stock', feedStockRoutes);
+app.use('/api/farm-assets', farmAssetRoutes);
 
 app.get('/', (req, res) => {
   res.send('Cattle Management API is running...');
