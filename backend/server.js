@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const { migrateLegacyCustomers } = require('./utils/migrateLegacyCustomers');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,7 +14,10 @@ app.use('/uploads', express.static('uploads'));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cattle_management')
-  .then(() => console.log('MongoDB connected'))
+  .then(async () => {
+    console.log('MongoDB connected');
+    await migrateLegacyCustomers();
+  })
   .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
@@ -23,12 +27,14 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const feedStockRoutes = require('./routes/feedStockRoutes');
 const farmAssetRoutes = require('./routes/farmAssetRoutes');
+const shopProductRoutes = require('./routes/shopProductRoutes');
 app.use('/api/cattle', cattleRoutes);
 app.use('/api/cattle-records', cattleRecordRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/feed-stock', feedStockRoutes);
 app.use('/api/farm-assets', farmAssetRoutes);
+app.use('/api/shop-products', shopProductRoutes);
 
 app.get('/', (req, res) => {
   res.send('Cattle Management API is running...');

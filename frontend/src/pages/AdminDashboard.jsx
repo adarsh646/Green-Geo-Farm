@@ -70,7 +70,7 @@ const AdminDashboard = () => {
   ];
 
   const managementItems = [
-    { title: 'Manage Ranchers', desc: 'View, edit & delete rancher accounts', icon: <Users size={24} />, color: '#f3e5f5', link: '/manage-ranchers' },
+    { title: 'Manage Ranchers', desc: 'View, add & delete rancher accounts', icon: <Users size={24} />, color: '#f3e5f5', link: '/manage-ranchers' },
     { title: 'CattleManage', desc: 'herd, health & breeding records', icon: <Plus size={24} />, color: '#e8f5e9', link: '/cattle-management' },
     { title: 'Feed Stock', desc: 'Manage feed types and inventory', icon: <Package size={24} />, color: '#fff9c4', link: '/feed-stock' },
     { title: 'Milk Analytics', desc: 'Global production & quality trends', icon: <Milk size={24} />, color: '#fff3e0' },

@@ -4,28 +4,76 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import logo from '../assets/cattle-logo.png';
 import '../Auth.css';
+import {
+  clearLegacySession,
+  setManagementSession,
+  setShopSession,
+} from '../utils/sessionStorage';
 
-const Login = ({ setAuth }) => {
+const Login = ({ setAuth, portal = 'shop' }) => {
+  const isManagementPortal = portal === 'management';
+  const signupPath = isManagementPortal ? '/management/signup' : '/shop/signup';
+
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+  const [actionLink, setActionLink] = useState('');
+  const [actionText, setActionText] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(''); // Clear error when user types
+    setError('');
+    setInfoMessage('');
+    setActionLink('');
+    setActionText('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5000/api/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('username', response.data.username);
-      localStorage.setItem('role', response.data.role);
-      setAuth(true, response.data.role);
-      navigate('/dashboard');
+      clearLegacySession();
+
+      if (isManagementPortal) {
+        if (response.data.role === 'customer' || response.data.role === 'shopkeeper') {
+          setError('You need to purchase cattle management software to continue.');
+          setInfoMessage('Shop access is available for customer and shopkeeper accounts. Management access is for rancher/admin only.');
+          setActionLink('/shop');
+          setActionText('Go to Shop');
+          return;
+        }
+
+        setManagementSession({
+          token: response.data.token,
+          username: response.data.username,
+          role: response.data.role,
+        });
+        setAuth({ module: 'management', role: response.data.role });
+        navigate('/dashboard');
+        return;
+      }
+
+      if (!['customer', 'shopkeeper'].includes(response.data.role)) {
+        setError('This sign in is only for shop accounts.');
+        setInfoMessage('Rancher/Admin users should sign in from the Cattle Management page.');
+        setActionLink('/management/login');
+        setActionText('Go to Management Sign In');
+        return;
+      }
+
+      setShopSession({
+        token: response.data.token,
+        username: response.data.username,
+        role: response.data.role,
+      });
+      setAuth({ module: 'shop', role: response.data.role });
+      navigate('/shop');
     } catch (err) {
+      setInfoMessage('');
+      setActionLink('');
+      setActionText('');
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     }
   };
@@ -37,7 +85,11 @@ const Login = ({ setAuth }) => {
           <img src={logo} alt="Green Geo Farms Logo" className="auth-logo" />
           <h1 className="auth-title">Sign In</h1>
         </div>
-        <p className="auth-subtitle">Enter your credentials to access your dashboard</p>
+        <p className="auth-subtitle">
+          {isManagementPortal
+            ? 'Enter rancher/admin credentials to access cattle management software'
+            : 'Enter your credentials to access the shop'}
+        </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -77,13 +129,23 @@ const Login = ({ setAuth }) => {
               </button>
             </div>
             {error && <p className="error-message">{error}</p>}
+            {infoMessage && (
+              <div className="auth-info-box">
+                <p className="info-message">{infoMessage}</p>
+                {actionLink && (
+                  <Link to={actionLink} className="info-action-link">
+                    {actionText}
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
 
           <button type="submit" className="btn-auth">Sign In</button>
         </form>
 
         <p className="auth-footer">
-          Don't have an account? <Link to="/signup" className="footer-link">Sign Up</Link>
+          Don't have an account? <Link to={signupPath} className="footer-link">Sign Up</Link>
         </p>
       </div>
     </div>

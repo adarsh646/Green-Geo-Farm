@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, X, Search, ArrowLeft, Settings, Calendar, Info, Trash2, Wrench, Edit, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import '../CattleManagement.css'; // Reusing styles
+import { getManagementRole } from '../utils/sessionStorage';
 
 const FarmAssets = () => {
   const [assets, setAssets] = useState([]);
@@ -13,7 +14,7 @@ const FarmAssets = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
-  const userRole = localStorage.getItem('role');
+  const userRole = getManagementRole();
   const isAdmin = userRole === 'admin';
 
   const [formData, setFormData] = useState({

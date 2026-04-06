@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, Mail, User as UserIcon, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, Mail, User as UserIcon, Search, Lock, Plus } from 'lucide-react';
 import './ManageRanchers.css';
 
 const ManageRanchers = () => {
   const [ranchers, setRanchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [newRancher, setNewRancher] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
   const navigate = useNavigate();
 
   const API_URL = 'http://localhost:5000/api/users/ranchers';
@@ -16,9 +22,9 @@ const ManageRanchers = () => {
     try {
       const response = await axios.get(API_URL);
       setRanchers(response.data);
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching ranchers');
+    } finally {
       setLoading(false);
     }
   };
@@ -31,10 +37,39 @@ const ManageRanchers = () => {
     if (window.confirm('Are you sure you want to delete this rancher? This action cannot be undone.')) {
       try {
         await axios.delete(`${API_URL}/${id}`);
-        fetchRanchers();
+        await fetchRanchers();
       } catch (err) {
         alert('Error deleting rancher');
       }
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setNewRancher({ ...newRancher, [e.target.name]: e.target.value });
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    let generated = '';
+    for (let i = 0; i < 12; i += 1) {
+      generated += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewRancher((prev) => ({ ...prev, password: generated }));
+  };
+
+  const handleCreateRancher = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+
+    try {
+      await axios.post(API_URL, newRancher);
+      alert('Rancher account created successfully');
+      setNewRancher({ username: '', email: '', password: '' });
+      await fetchRanchers();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error creating rancher');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -60,6 +95,57 @@ const ManageRanchers = () => {
           />
         </div>
       </header>
+
+      <section className="create-rancher-card">
+        <h2>Create Rancher Credentials</h2>
+        <form className="create-rancher-form" onSubmit={handleCreateRancher}>
+          <div className="credential-input">
+            <UserIcon size={16} />
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={newRancher.username}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="credential-input">
+            <Mail size={16} />
+            <input
+              type="email"
+              name="email"
+              placeholder="rancher@example.com"
+              value={newRancher.email}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="credential-input">
+            <Lock size={16} />
+            <input
+              type="text"
+              name="password"
+              placeholder="Password"
+              value={newRancher.password}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="credential-actions">
+            <button type="button" className="btn-generate-password" onClick={generatePassword}>
+              Generate Password
+            </button>
+            <button type="submit" className="btn-add-rancher" disabled={creating}>
+              <Plus size={16} />
+              {creating ? 'Creating...' : 'Add Rancher'}
+            </button>
+          </div>
+        </form>
+      </section>
 
       <main className="ranchers-list-main">
         {loading ? (

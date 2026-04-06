@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import './LandingPage.css';
@@ -18,83 +18,118 @@ import FarmAssets from './pages/FarmAssets';
 import Shop from './pages/Shop';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import {
+  clearManagementSession,
+  clearLegacySession,
+  getManagementRole,
+  getManagementToken,
+  getShopToken,
+} from './utils/sessionStorage';
+
+const LandingPageWithSessionReset = ({ onEnterLanding }) => {
+  useEffect(() => {
+    onEnterLanding();
+  }, [onEnterLanding]);
+
+  return <LandingPage />;
+};
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+  const [isManagementAuthenticated, setIsManagementAuthenticated] = useState(false);
+  const [managementRole, setManagementRole] = useState(null);
+  const [isShopAuthenticated, setIsShopAuthenticated] = useState(false);
 
-  const handleAuth = (authStatus, role = null) => {
-    setIsAuthenticated(authStatus);
-    if (role) setUserRole(role);
-    else if (!authStatus) setUserRole(null);
+  const hydrateAuthState = () => {
+    const managementToken = getManagementToken();
+    const role = getManagementRole();
+    const shopToken = getShopToken();
+
+    setIsManagementAuthenticated(Boolean(managementToken));
+    setManagementRole(managementToken ? role : null);
+    setIsShopAuthenticated(Boolean(shopToken));
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    if (token) {
-      handleAuth(true, role);
-    }
+    clearLegacySession();
+    hydrateAuthState();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('role');
-    handleAuth(false);
+  const handleAuth = ({ module, role = null }) => {
+    if (module === 'shop') {
+      setIsShopAuthenticated(true);
+      return;
+    }
+
+    if (module === 'management') {
+      setIsManagementAuthenticated(true);
+      setManagementRole(role);
+    }
   };
+
+  const handleLandingEntry = useCallback(() => {
+    clearManagementSession();
+    setIsManagementAuthenticated(false);
+    setManagementRole(null);
+  }, []);
 
   return (
     <Router>
       <div className="App">
         <main>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<LandingPageWithSessionReset onEnterLanding={handleLandingEntry} />} />
             <Route path="/management" element={<ManagementModule />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/login" element={<Login setAuth={handleAuth} />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route
+              path="/shop"
+              element={<Shop onShopLogout={() => setIsShopAuthenticated(false)} />}
+            />
+            <Route path="/shop/login" element={<Login setAuth={handleAuth} portal="shop" />} />
+            <Route path="/shop/signup" element={<Signup portal="shop" />} />
+            <Route path="/management/login" element={<Login setAuth={handleAuth} portal="management" />} />
+            <Route path="/management/signup" element={<Signup portal="management" />} />
+            <Route path="/login" element={<Navigate to="/shop/login" replace />} />
+            <Route path="/signup" element={<Navigate to="/shop/signup" replace />} />
             <Route 
               path="/dashboard" 
               element={
-                isAuthenticated ? (
-                  userRole === 'admin' ? <AdminDashboard /> : <Dashboard />
+                isManagementAuthenticated ? (
+                  managementRole === 'admin' ? <AdminDashboard /> : <Dashboard />
                 ) : (
-                  <Navigate to="/login" />
+                  <Navigate to="/management/login" />
                 )
               } 
             />
             <Route 
               path="/cattle-management" 
-              element={isAuthenticated ? <CattleManagement /> : <Navigate to="/login" />} 
+              element={isManagementAuthenticated ? <CattleManagement /> : <Navigate to="/management/login" />} 
             />
             <Route 
               path="/cattle-records" 
-              element={isAuthenticated ? <CattleRecordForm /> : <Navigate to="/login" />} 
+              element={isManagementAuthenticated ? <CattleRecordForm /> : <Navigate to="/management/login" />} 
             />
             <Route 
               path="/cattle-report/:id" 
-              element={isAuthenticated ? <CattleReport /> : <Navigate to="/login" />} 
+              element={isManagementAuthenticated ? <CattleReport /> : <Navigate to="/management/login" />} 
             />
             <Route 
               path="/feed-stock" 
-              element={isAuthenticated ? <FeedStock /> : <Navigate to="/login" />} 
+              element={isManagementAuthenticated ? <FeedStock /> : <Navigate to="/management/login" />} 
             />
             <Route 
               path="/farm-assets" 
-              element={isAuthenticated ? <FarmAssets /> : <Navigate to="/login" />} 
+              element={isManagementAuthenticated ? <FarmAssets /> : <Navigate to="/management/login" />} 
             />
             <Route 
               path="/manage-ranchers" 
-              element={isAuthenticated && userRole === 'admin' ? <ManageRanchers /> : <Navigate to="/login" />} 
+              element={isManagementAuthenticated && managementRole === 'admin' ? <ManageRanchers /> : <Navigate to="/management/login" />} 
             />
             <Route 
               path="/admin" 
               element={
-                isAuthenticated && userRole === 'admin' ? (
+                isManagementAuthenticated && managementRole === 'admin' ? (
                   <AdminDashboard />
                 ) : (
-                  <Navigate to="/login" />
+                  <Navigate to="/management/login" />
                 )
               } 
             />

@@ -5,7 +5,10 @@ import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import logo from '../assets/cattle-logo.png';
 import '../Auth.css';
 
-const Signup = () => {
+const Signup = ({ portal = 'shop' }) => {
+  const isManagementPortal = portal === 'management';
+  const signInPath = isManagementPortal ? '/management/login' : '/shop/login';
+
   const [formData, setFormData] = useState({ 
     username: '', 
     email: '', 
@@ -13,25 +16,43 @@ const Signup = () => {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+  const [actionLink, setActionLink] = useState('');
+  const [actionText, setActionText] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
+    setInfoMessage('');
+    setActionLink('');
+    setActionText('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
+
+    if (isManagementPortal) {
+      setError('You need to purchase cattle management software to continue.');
+      setInfoMessage('Customer sign-up is available from the Shop. Rancher/Admin accounts are provided through management onboarding.');
+      setActionLink('/shop/signup');
+      setActionText('Go to Shop Sign Up');
+      return;
+    }
+
     try {
       const { username, email, password } = formData;
       await axios.post('http://localhost:5000/api/auth/register', { username, email, password });
       alert('Registration successful! Please login.');
-      navigate('/login');
+      navigate('/shop/login');
     } catch (err) {
-      alert(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Registration failed');
     }
   };
 
@@ -42,7 +63,11 @@ const Signup = () => {
           <img src={logo} alt="Green Geo Farms Logo" className="auth-logo" />
           <h1 className="auth-title">Create Account</h1>
         </div>
-        <p className="auth-subtitle">Join Green Geo Farms to start managing your herd</p>
+        <p className="auth-subtitle">
+          {isManagementPortal
+            ? 'Create access for cattle management software'
+            : 'Join Green Geo Farms to start shopping'}
+        </p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -51,7 +76,6 @@ const Signup = () => {
               <User className="input-icon" size={20} />
               <input 
                 name="username" 
-                placeholder="johndoe" 
                 onChange={handleChange} 
                 required 
               />
@@ -65,7 +89,6 @@ const Signup = () => {
               <input 
                 name="email" 
                 type="email" 
-                placeholder="rancher@example.com" 
                 onChange={handleChange} 
                 required 
               />
@@ -79,7 +102,6 @@ const Signup = () => {
               <input 
                 name="password" 
                 type={showPassword ? "text" : "password"} 
-                placeholder="........" 
                 onChange={handleChange} 
                 required 
               />
@@ -100,18 +122,28 @@ const Signup = () => {
               <input 
                 name="confirmPassword" 
                 type={showPassword ? "text" : "password"} 
-                placeholder="........" 
                 onChange={handleChange} 
                 required 
               />
             </div>
+            {error && <p className="error-message">{error}</p>}
+            {infoMessage && (
+              <div className="auth-info-box">
+                <p className="info-message">{infoMessage}</p>
+                {actionLink && (
+                  <Link to={actionLink} className="info-action-link">
+                    {actionText}
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
 
           <button type="submit" className="btn-auth">Sign Up</button>
         </form>
 
         <p className="auth-footer">
-          Already have an account? <Link to="/login" className="footer-link">Sign In</Link>
+          Already have an account? <Link to={signInPath} className="footer-link">Sign In</Link>
         </p>
       </div>
     </div>

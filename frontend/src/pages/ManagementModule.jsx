@@ -13,8 +13,8 @@ const ManagementModule = () => {
           <span className="logo-text">Green Geo Farms</span>
         </div>
         <div className="nav-actions">
-          <Link to="/login" className="btn-login-nav">Sign In</Link>
-          <Link to="/signup" className="btn-signup-nav">Sign Up</Link>
+          <Link to="/management/login" className="btn-login-nav">Sign In</Link>
+          <Link to="/management/signup" className="btn-signup-nav">Sign Up</Link>
         </div>
       </nav>
 

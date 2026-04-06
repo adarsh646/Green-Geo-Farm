@@ -99,12 +99,58 @@
   background-color: #fff;
 }
 
+.role-select {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border: 1.5px solid #eee;
+  border-radius: 12px;
+  font-size: 16px;
+  background-color: #fcfcfc;
+  transition: all 0.2s;
+  cursor: pointer;
+  appearance: none;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: #2d5a3f;
+  background-color: #fff;
+}
+
 .error-message {
   color: #d32f2f;
   font-size: 14px;
   margin-top: 4px;
   font-weight: 500;
   text-align: left;
+}
+
+.auth-info-box {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.info-message {
+  color: #475569;
+  font-size: 13px;
+  margin: 0;
+}
+
+.info-action-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #2d5a3f;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.info-action-link:hover {
+  text-decoration: underline;
 }
 
 .toggle-password {

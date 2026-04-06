@@ -1,8 +1,9 @@
-  import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Save, Package, ArrowLeft, RefreshCw, X, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './FeedStock.css';
+import { getManagementRole } from '../utils/sessionStorage';
 
 const FeedStock = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const FeedStock = () => {
   const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
-    const role = localStorage.getItem('role');
+    const role = getManagementRole();
     if (role) {
       setUserRole(role);
     }

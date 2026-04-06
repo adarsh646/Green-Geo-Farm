@@ -52,6 +52,92 @@
   width: 250px;
 }
 
+.create-rancher-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbf8 100%);
+  border: 1px solid #dbe8df;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(19, 33, 23, 0.08);
+}
+
+.create-rancher-card h2 {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  color: #1f3a2b;
+}
+
+.create-rancher-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.credential-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #dbe3e8;
+  border-radius: 12px;
+  padding: 0 12px;
+  color: #64748b;
+}
+
+.credential-input input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.credential-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-generate-password,
+.btn-add-rancher {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-generate-password {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.btn-generate-password:hover {
+  background: #cbd5e1;
+}
+
+.btn-add-rancher {
+  background: #2d5a3f;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-add-rancher:hover {
+  background: #1f432e;
+}
+
+.btn-add-rancher:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .ranchers-list-main {
   padding: 20px 0;
 }
@@ -127,4 +213,47 @@
   text-align: center;
   padding: 50px;
   color: #94a3b8;
+}
+
+@media (max-width: 1024px) {
+  .manage-header {
+    flex-wrap: wrap;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  .create-rancher-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .manage-header h1 {
+    font-size: 28px;
+    width: 100%;
+  }
+
+  .create-rancher-form {
+    grid-template-columns: 1fr;
+  }
+
+  .credential-actions {
+    flex-direction: column;
+  }
+
+  .btn-generate-password,
+  .btn-add-rancher {
+    width: 100%;
+  }
+
+  .rancher-row-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
 }

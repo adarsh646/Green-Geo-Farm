@@ -7,9 +7,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/cattle-logo.png';
 import '../Dashboard.css';
+import { getManagementUsername } from '../utils/sessionStorage';
 
 const Dashboard = () => {
-  const username = localStorage.getItem('username') || 'Rancher';
+  const username = getManagementUsername() || 'Rancher';
   const navigate = useNavigate();
   const [feedStockPercentage, setFeedStockPercentage] = useState(0);
   const [farmAssets, setFarmAssets] = useState([]);
