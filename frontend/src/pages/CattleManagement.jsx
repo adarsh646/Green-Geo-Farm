@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, X, Search, ArrowLeft, Info, Calendar, Activity, Scale, User as UserIcon, Trash2 } from 'lucide-react';
+import { Plus, X, Search, ArrowLeft, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import '../CattleManagement.css';
+import { getManagementRole, getManagementToken } from '../utils/sessionStorage';
 
 const CattleManagement = () => {
   const [cattle, setCattle] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedCattle, setSelectedCattle] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const isAdmin = getManagementRole() === 'admin';
   
   const [formData, setFormData] = useState({
     tagNumber: '',
@@ -56,6 +56,19 @@ const CattleManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const token = getManagementToken();
+
+    if (!isAdmin) {
+      alert('Only admin can add cattle images and records.');
+      return;
+    }
+
+    if (!token) {
+      alert('Session expired. Please sign in again.');
+      navigate('/management/login');
+      return;
+    }
+
     const data = new FormData();
     Object.keys(formData).forEach(key => data.append(key, formData[key]));
     if (imageFile) {
@@ -66,6 +79,7 @@ const CattleManagement = () => {
       await axios.post(API_URL, data, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
       });
       setShowAddForm(false);
@@ -81,18 +95,6 @@ const CattleManagement = () => {
       fetchCattle();
     } catch (err) {
       alert('Error adding cattle');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/${id}`);
-      setSelectedCattle(null);
-      setShowDeleteConfirm(false);
-      fetchCattle();
-    } catch (err) {
-      console.error('Error deleting cattle');
-      alert('Error deleting cattle. Please try again.');
     }
   };
 
@@ -127,7 +129,11 @@ const CattleManagement = () => {
               <div 
                 key={item._id} 
                 className="cattle-item-row" 
-                onClick={() => setSelectedCattle(item)}
+                onClick={() =>
+                  navigate(`/cattle-details/${item._id}`, {
+                    state: { cattle: item }
+                  })
+                }
               >
                 <div className="cattle-avatar">
                   {item.imageUrl ? (
@@ -150,15 +156,17 @@ const CattleManagement = () => {
                 </div>
               </div>
             ))}
-            {cattle.length === 0 && <p className="no-data">No cattle records found.</p>}
+            {filteredCattle.length === 0 && <p className="no-data">No cattle records found.</p>}
           </div>
         )}
       </main>
 
       {/* Floating Add Button */}
-      <button className="fab-add" onClick={() => setShowAddForm(true)}>
-        <Plus size={28} />
-      </button>
+      {isAdmin && (
+        <button className="fab-add" onClick={() => setShowAddForm(true)}>
+          <Plus size={28} />
+        </button>
+      )}
 
       {/* Add Cattle Modal */}
       {showAddForm && (
@@ -222,130 +230,6 @@ const CattleManagement = () => {
         </div>
       )}
 
-      {/* Detail Popup Modal */}
-      {selectedCattle && (
-        <div className="modal-overlay">
-          <div className="modal-content detail-modal">
-            <div className="modal-header">
-              <h2>Cattle Details</h2>
-              <button className="close-btn" onClick={() => setSelectedCattle(null)}>
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="detail-card">
-              {selectedCattle.imageUrl && (
-                <div className="detail-image-container">
-                  <img 
-                    src={`${BASE_URL}${selectedCattle.imageUrl}`} 
-                    alt="Cattle" 
-                    className="detail-image" 
-                  />
-                </div>
-              )}
-              <div className="detail-header-main">
-                <div className="detail-tag-large">{selectedCattle.tagNumber}</div>
-                <span className={`status-badge ${selectedCattle.healthStatus.toLowerCase()}`}>
-                  {selectedCattle.healthStatus}
-                </span>
-              </div>
-
-              <div className="detail-info-grid">
-                <div className="info-item">
-                  <UserIcon size={20} />
-                  <div>
-                    <span className="info-label">Breed</span>
-                    <span className="info-value">{selectedCattle.breed}</span>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <Calendar size={20} />
-                  <div>
-                    <span className="info-label">Age</span>
-                    <span className="info-value">{selectedCattle.age} Years</span>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <Activity size={20} />
-                  <div>
-                    <span className="info-label">Gender</span>
-                    <span className="info-value">{selectedCattle.gender}</span>
-                  </div>
-                </div>
-                <div className="info-item">
-                  <Scale size={20} />
-                  <div>
-                    <span className="info-label">Weight</span>
-                    <span className="info-value">{selectedCattle.weight || 'Not recorded'} Kg</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              className="btn-submit-cattle" 
-              style={{ width: '100%', marginBottom: '12px' }}
-              onClick={() => navigate('/cattle-records', { 
-                state: { 
-                  cattleId: selectedCattle._id, 
-                  tagNumber: selectedCattle.tagNumber,
-                  breed: selectedCattle.breed,
-                  age: selectedCattle.age
-                } 
-              })}
-            >
-              Add Daily Record
-            </button>
-            <button 
-              className="btn-submit-cattle" 
-              style={{ width: '100%', marginBottom: '12px', backgroundColor: '#3b82f6' }}
-              onClick={() => navigate(`/cattle-report/${selectedCattle._id}`)}
-            >
-              View Weekly Report
-            </button>
-            <button 
-              className="btn-submit-cattle" 
-              style={{ width: '100%', marginBottom: '12px', backgroundColor: '#ef4444' }}
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              <Trash2 size={20} style={{ marginRight: '8px' }} />
-              Delete Cattle Record
-            </button>
-            <button className="btn-close-detail" style={{ marginTop: 0 }} onClick={() => setSelectedCattle(null)}>Close</button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay" style={{ zIndex: 3000 }}>
-          <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center' }}>
-            <div className="delete-confirm-icon" style={{ color: '#ef4444', marginBottom: '20px' }}>
-              <Trash2 size={48} />
-            </div>
-            <h2 style={{ marginBottom: '12px' }}>Delete Cattle?</h2>
-            <p style={{ color: '#64748b', marginBottom: '30px' }}>
-              Are you sure you want to delete cattle <strong>{selectedCattle?.tagNumber}</strong>? This action cannot be undone.
-            </p>
-            <div className="form-row" style={{ gap: '12px' }}>
-              <button 
-                className="btn-close-detail" 
-                style={{ marginTop: 0, flex: 1 }} 
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn-submit-cattle" 
-                style={{ marginTop: 0, flex: 1, backgroundColor: '#ef4444' }}
-                onClick={() => handleDelete(selectedCattle?._id)}
-              >
-                Yes, Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

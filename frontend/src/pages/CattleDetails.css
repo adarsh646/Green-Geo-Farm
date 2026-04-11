@@ -1,0 +1,443 @@
+.cattle-details-main {
+  margin-bottom: 60px;
+}
+
+.cattle-details-page {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  align-items: start;
+  gap: 24px;
+}
+
+.cattle-profile-panel {
+  flex: 1.2;
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
+  background: white;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cattle-profile-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+}
+
+.cattle-profile-panel::before {
+  display: none;
+}
+
+.cattle-image-column {
+  padding: 20px;
+  background: white;
+}
+
+.cattle-image-tile {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+}
+
+.cattle-image-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.cattle-image-tile-img,
+.cattle-image-placeholder {
+  width: 100%;
+  aspect-ratio: 5 / 6;
+  display: block;
+}
+
+.cattle-image-tile-img {
+  object-fit: cover;
+  object-position: center;
+  filter: none;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cattle-image-tile:hover .cattle-image-tile-img {
+  transform: scale(1.04);
+}
+
+.cattle-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 84px;
+  font-weight: 700;
+  color: #2d5a3f;
+  background: #f8fafc;
+}
+
+.cattle-image-scan-label {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 2;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: #166534;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cattle-image-bars {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.cattle-image-bars i {
+  width: 4px;
+  border-radius: 10px;
+  background: #22c55e;
+}
+
+.cattle-image-bars i:nth-child(1) { height: 14px; }
+.cattle-image-bars i:nth-child(2) { height: 22px; }
+.cattle-image-bars i:nth-child(3) { height: 18px; }
+
+.cattle-profile-content {
+  padding: 28px 30px 28px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.cattle-profile-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cattle-profile-grade {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.cattle-profile-node {
+  color: #64748b;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cattle-details-header-inline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.cattle-details-tag {
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 800;
+  color: #2d5a3f;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.cattle-profile-subtitle {
+  margin: 0;
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 700;
+  color: #0891b2;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.cattle-details-grid-direct {
+  margin: 4px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cattle-detail-direct-item {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.cattle-detail-direct-item dt {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.cattle-detail-direct-item dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.cattle-status-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.cattle-neon-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.cattle-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.tone-healthy {
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.2);
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.tone-warning {
+  color: #ca8a04;
+  border-color: rgba(202, 138, 4, 0.2);
+  background: rgba(202, 138, 4, 0.08);
+}
+
+.tone-sick {
+  color: #e11d48;
+  border-color: rgba(225, 29, 72, 0.2);
+  background: rgba(225, 29, 72, 0.08);
+}
+
+.tone-default {
+  color: #475569;
+  border-color: rgba(71, 85, 105, 0.2);
+  background: rgba(71, 85, 105, 0.08);
+}
+
+.tone-cyan {
+  color: #0891b2;
+  border-color: rgba(8, 145, 178, 0.2);
+  background: rgba(8, 145, 178, 0.08);
+}
+
+.cattle-details-actions {
+  margin-top: 0;
+  grid-column: 1 / -1;
+}
+
+.cattle-model-plain {
+  flex: 0.8;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 24px;
+  border-radius: 24px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  width: auto;
+  gap: 14px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cattle-model-plain:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+}
+
+.cattle-model-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cattle-model-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #2d5a3f;
+}
+
+.cattle-model-body {
+  width: 100%;
+}
+
+.cattle-model-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #2d5a3f;
+  color: #2d5a3f;
+  background: white;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.cattle-model-upload input {
+  display: none;
+}
+
+.cattle-model-viewer {
+  width: 100%;
+  height: min(56vh, 460px);
+  --progress-bar-color: #2d5a3f;
+  border-radius: 16px;
+}
+
+.cattle-model-viewer-wrap {
+  width: 100%;
+  position: relative;
+}
+
+.model-delete-option-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(239, 68, 68, 0.92);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.model-delete-option-btn:hover {
+  background: #dc2626;
+}
+
+.cattle-model-placeholder-text {
+  margin: 0 0 12px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .cattle-details-page {
+    grid-template-columns: 1fr;
+  }
+
+  .cattle-profile-panel {
+    grid-template-columns: minmax(280px, 340px) 1fr;
+  }
+}
+
+@media (max-width: 980px) {
+  .cattle-profile-panel {
+    grid-template-columns: 1fr;
+    border-radius: 24px;
+  }
+
+  .cattle-image-column {
+    padding-bottom: 0;
+  }
+
+  .cattle-profile-content {
+    padding: 20px 22px 24px;
+  }
+
+  .cattle-details-tag {
+    font-size: clamp(34px, 8vw, 54px);
+  }
+
+  .cattle-detail-direct-item dd {
+    font-size: 24px;
+  }
+
+  .cattle-model-viewer {
+    height: min(52vh, 400px);
+  }
+}
+
+@media (max-width: 768px) {
+  .cattle-details-grid-direct {
+    grid-template-columns: 1fr;
+  }
+
+  .cattle-status-row {
+    gap: 10px;
+  }
+
+  .cattle-neon-pill {
+    font-size: 15px;
+  }
+
+  .cattle-details-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .cattle-model-viewer {
+    height: 320px;
+  }
+}
+
+@media (max-width: 520px) {
+  .cattle-image-column {
+    padding: 14px;
+  }
+
+  .cattle-profile-content {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .cattle-profile-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cattle-detail-direct-item dd {
+    font-size: 22px;
+  }
+}

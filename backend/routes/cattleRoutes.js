@@ -1,20 +1,83 @@
 const express = require('express');
-const router = express.Router();
-const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 const Cattle = require('../models/Cattle');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
+const router = express.Router();
+
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+const MODEL_UPLOADS_DIR = path.join(UPLOADS_DIR, 'cattle-models');
+
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+fs.mkdirSync(MODEL_UPLOADS_DIR, { recursive: true });
+
+const createFileName = (prefix, originalName) => {
+  const extension = path.extname(originalName || '').toLowerCase();
+  return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
+};
+
+const imageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, UPLOADS_DIR);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+    cb(null, createFileName('image', file.originalname));
+  },
 });
 
-const upload = multer({ storage: storage });
+const modelStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, MODEL_UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    cb(null, createFileName('model', file.originalname));
+  },
+});
+
+const imageUpload = multer({
+  storage: imageStorage,
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed'));
+    }
+    cb(null, true);
+  },
+});
+
+const modelUpload = multer({
+  storage: modelStorage,
+  fileFilter: (req, file, cb) => {
+    const isSupported = /\.(glb|gltf)$/i.test(file.originalname || '');
+    if (!isSupported) {
+      return cb(new Error('Only .glb and .gltf files are allowed'));
+    }
+    cb(null, true);
+  },
+});
+
+const removeFileByUrl = async (fileUrl) => {
+  if (!fileUrl || typeof fileUrl !== 'string' || !fileUrl.startsWith('/uploads/')) {
+    return;
+  }
+
+  const relativePath = fileUrl.replace('/uploads/', '');
+  const resolvedPath = path.resolve(UPLOADS_DIR, relativePath);
+  const uploadsRoot = path.resolve(UPLOADS_DIR);
+
+  if (!resolvedPath.startsWith(uploadsRoot)) {
+    return;
+  }
+
+  try {
+    await fs.promises.unlink(resolvedPath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error(`Error removing file ${resolvedPath}:`, error.message);
+    }
+  }
+};
 
 // Get all cattle
 router.get('/', async (req, res) => {
@@ -37,54 +100,151 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create cattle with image upload
-router.post('/', upload.single('image'), async (req, res) => {
-  const cattle = new Cattle({
-    tagNumber: req.body.tagNumber,
-    breed: req.body.breed,
-    age: req.body.age,
-    gender: req.body.gender,
-    healthStatus: req.body.healthStatus,
-    weight: req.body.weight,
-    imageUrl: req.file ? `/uploads/${req.file.filename}` : '',
-  });
+// Create cattle with image upload (admin only)
+router.post(
+  '/',
+  authenticateToken,
+  authorizeRoles('admin'),
+  imageUpload.single('image'),
+  async (req, res) => {
+    const cattle = new Cattle({
+      tagNumber: req.body.tagNumber,
+      breed: req.body.breed,
+      age: req.body.age,
+      gender: req.body.gender,
+      healthStatus: req.body.healthStatus,
+      weight: req.body.weight,
+      imageUrl: req.file ? `/uploads/${req.file.filename}` : '',
+    });
 
-  try {
-    const newCattle = await cattle.save();
-    res.status(201).json(newCattle);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    try {
+      const newCattle = await cattle.save();
+      res.status(201).json(newCattle);
+    } catch (err) {
+      if (req.file) {
+        await removeFileByUrl(`/uploads/${req.file.filename}`);
+      }
+      res.status(400).json({ message: err.message });
+    }
   }
-});
+);
 
-// Update cattle
-router.patch('/:id', upload.single('image'), async (req, res) => {
-  try {
-    const cattle = await Cattle.findById(req.params.id);
-    if (!cattle) return res.status(404).json({ message: 'Cattle not found' });
+// Update cattle profile image/details (admin only)
+router.patch(
+  '/:id',
+  authenticateToken,
+  authorizeRoles('admin'),
+  imageUpload.single('image'),
+  async (req, res) => {
+    try {
+      const cattle = await Cattle.findById(req.params.id);
+      if (!cattle) return res.status(404).json({ message: 'Cattle not found' });
 
-    const updateData = { ...req.body };
-    if (req.file) {
-      updateData.imageUrl = `/uploads/${req.file.filename}`;
+      const previousImageUrl = cattle.imageUrl;
+      const updateData = { ...req.body };
+
+      if (req.file) {
+        updateData.imageUrl = `/uploads/${req.file.filename}`;
+      }
+
+      Object.assign(cattle, updateData);
+      const updatedCattle = await cattle.save();
+
+      if (req.file && previousImageUrl && previousImageUrl !== updatedCattle.imageUrl) {
+        await removeFileByUrl(previousImageUrl);
+      }
+
+      res.json(updatedCattle);
+    } catch (err) {
+      if (req.file) {
+        await removeFileByUrl(`/uploads/${req.file.filename}`);
+      }
+      res.status(400).json({ message: err.message });
+    }
+  }
+);
+
+// Upload or replace 3D model (admin only)
+router.patch(
+  '/:id/model',
+  authenticateToken,
+  authorizeRoles('admin'),
+  modelUpload.single('model3d'),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: '3D model file is required' });
     }
 
-    Object.assign(cattle, updateData);
-    const updatedCattle = await cattle.save();
-    res.json(updatedCattle);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
+    try {
+      const cattle = await Cattle.findById(req.params.id);
+      if (!cattle) {
+        await removeFileByUrl(`/uploads/cattle-models/${req.file.filename}`);
+        return res.status(404).json({ message: 'Cattle not found' });
+      }
 
-// Delete cattle
-router.delete('/:id', async (req, res) => {
-  try {
-    const result = await Cattle.findByIdAndDelete(req.params.id);
-    if (!result) return res.status(404).json({ message: 'Cattle not found' });
-    res.json({ message: 'Cattle deleted' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+      const previousModelUrl = cattle.model3dUrl;
+      cattle.model3dUrl = `/uploads/cattle-models/${req.file.filename}`;
+
+      const updatedCattle = await cattle.save();
+
+      if (previousModelUrl && previousModelUrl !== updatedCattle.model3dUrl) {
+        await removeFileByUrl(previousModelUrl);
+      }
+
+      res.json(updatedCattle);
+    } catch (err) {
+      await removeFileByUrl(`/uploads/cattle-models/${req.file.filename}`);
+      res.status(400).json({ message: err.message });
+    }
   }
-});
+);
+
+// Delete 3D model (admin only)
+router.delete(
+  '/:id/model',
+  authenticateToken,
+  authorizeRoles('admin'),
+  async (req, res) => {
+    try {
+      const cattle = await Cattle.findById(req.params.id);
+      if (!cattle) return res.status(404).json({ message: 'Cattle not found' });
+
+      if (cattle.model3dUrl) {
+        await removeFileByUrl(cattle.model3dUrl);
+      }
+
+      cattle.model3dUrl = '';
+      const updatedCattle = await cattle.save();
+      res.json(updatedCattle);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// Delete cattle (admin only)
+router.delete(
+  '/:id',
+  authenticateToken,
+  authorizeRoles('admin'),
+  async (req, res) => {
+    try {
+      const result = await Cattle.findByIdAndDelete(req.params.id);
+      if (!result) return res.status(404).json({ message: 'Cattle not found' });
+
+      if (result.imageUrl) {
+        await removeFileByUrl(result.imageUrl);
+      }
+
+      if (result.model3dUrl) {
+        await removeFileByUrl(result.model3dUrl);
+      }
+
+      res.json({ message: 'Cattle deleted' });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
 
 module.exports = router;

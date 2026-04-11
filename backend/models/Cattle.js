@@ -8,6 +8,7 @@ const cattleSchema = new mongoose.Schema({
   healthStatus: { type: String, default: 'Healthy' },
   weight: { type: Number },
   imageUrl: { type: String },
+  model3dUrl: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Cattle', cattleSchema);

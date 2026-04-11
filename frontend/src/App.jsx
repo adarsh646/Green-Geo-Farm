@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ManageRanchers from './pages/ManageRanchers';
 import CattleManagement from './pages/CattleManagement';
+import CattleDetails from './pages/CattleDetails';
 import CattleRecordForm from './pages/CattleRecordForm';
 import CattleReport from './pages/CattleReport';
 import FeedStock from './pages/FeedStock';
@@ -35,9 +36,12 @@ const LandingPageWithSessionReset = ({ onEnterLanding }) => {
 };
 
 function App() {
-  const [isManagementAuthenticated, setIsManagementAuthenticated] = useState(false);
-  const [managementRole, setManagementRole] = useState(null);
-  const [isShopAuthenticated, setIsShopAuthenticated] = useState(false);
+  const [isManagementAuthenticated, setIsManagementAuthenticated] = useState(() => Boolean(getManagementToken()));
+  const [managementRole, setManagementRole] = useState(() => {
+    const token = getManagementToken();
+    return token ? getManagementRole() : null;
+  });
+  const [isShopAuthenticated, setIsShopAuthenticated] = useState(() => Boolean(getShopToken()));
 
   const hydrateAuthState = () => {
     const managementToken = getManagementToken();
@@ -102,6 +106,10 @@ function App() {
             <Route 
               path="/cattle-management" 
               element={isManagementAuthenticated ? <CattleManagement /> : <Navigate to="/management/login" />} 
+            />
+            <Route
+              path="/cattle-details/:id"
+              element={isManagementAuthenticated ? <CattleDetails /> : <Navigate to="/management/login" />}
             />
             <Route 
               path="/cattle-records" 
