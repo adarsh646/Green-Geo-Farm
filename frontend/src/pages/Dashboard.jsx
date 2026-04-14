@@ -15,6 +15,7 @@ const Dashboard = () => {
   const [feedStockPercentage, setFeedStockPercentage] = useState(0);
   const [farmAssets, setFarmAssets] = useState([]);
 
+  
   useEffect(() => {
     const fetchData = async () => {
       try {

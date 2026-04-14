@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit3, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import '@google/model-viewer';
 import '../CattleManagement.css';
@@ -15,7 +15,18 @@ const CattleDetails = () => {
   const [cattle, setCattle] = useState(location.state?.cattle || null);
   const [loading, setLoading] = useState(!location.state?.cattle);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    tagNumber: '',
+    breed: '',
+    age: '',
+    gender: '',
+    healthStatus: '',
+    weight: '',
+  });
+  const [editImageFile, setEditImageFile] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
   const [modelFileUrl, setModelFileUrl] = useState('');
   const [showDeleteModelOption, setShowDeleteModelOption] = useState(false);
@@ -76,6 +87,67 @@ const CattleDetails = () => {
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditFormData({
+      tagNumber: cattle.tagNumber || '',
+      breed: cattle.breed || '',
+      age: cattle.age || '',
+      gender: cattle.gender || 'Female',
+      healthStatus: cattle.healthStatus || 'Healthy',
+      weight: cattle.weight || '',
+    });
+    setEditImageFile(null);
+    setShowEditForm(true);
+  };
+
+  const handleEditChange = (e) => {
+    setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const token = getManagementToken();
+
+    if (!isAdmin) {
+      alert('Only admin can edit cattle records.');
+      return;
+    }
+
+    if (!token) {
+      alert('Session expired. Please sign in again.');
+      navigate('/management/login');
+      return;
+    }
+
+    const data = new FormData();
+    Object.keys(editFormData).forEach((key) => {
+      if (editFormData[key] !== null && editFormData[key] !== undefined) {
+        data.append(key, editFormData[key]);
+      }
+    });
+
+    if (editImageFile) {
+      data.append('image', editImageFile);
+    }
+
+    try {
+      setUpdating(true);
+      const response = await axios.patch(`${API_URL}/${cattle._id}`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCattle(response.data);
+      setShowEditForm(false);
+    } catch (err) {
+      console.error('Error updating cattle:', err);
+      alert(err.response?.data?.message || 'Error updating cattle. Please try again.');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -347,6 +419,17 @@ const CattleDetails = () => {
                   {deleting ? 'Deleting...' : 'Delete Cattle Record'}
                 </button>
               )}
+              {isAdmin && (
+                <button
+                  className="btn-submit-cattle"
+                  onClick={handleEditClick}
+                  disabled={updating}
+                  style={{ backgroundColor: '#0891b2' }}
+                >
+                  <Edit3 size={20} style={{ marginRight: '8px' }} />
+                  {updating ? 'Updating...' : 'Edit Cattle Record'}
+                </button>
+              )}
             </div>
           </section>
         ) : (
@@ -377,13 +460,105 @@ const CattleDetails = () => {
               </button>
               <button
                 className="btn-submit-cattle"
-                style={{ marginTop: 0, flex: 1, backgroundColor: '#ef4444' }}
+                style={{ marginTop: 0, flex: 1, backgroundColor: '#ff3131', boxShadow: '0 0 15px rgba(255, 49, 49, 0.4)' }}
                 onClick={handleDelete}
                 disabled={deleting}
               >
                 {deleting ? 'Deleting...' : 'Yes, Delete'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showEditForm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit Cattle Details</h2>
+              <button className="close-btn" onClick={() => setShowEditForm(false)}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="cattle-form">
+              <div className="form-group">
+                <label>Tag Number</label>
+                <input
+                  name="tagNumber"
+                  value={editFormData.tagNumber}
+                  onChange={handleEditChange}
+                  placeholder="e.g. TX-402"
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Breed</label>
+                  <input
+                    name="breed"
+                    value={editFormData.breed}
+                    onChange={handleEditChange}
+                    placeholder="e.g. Angus"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Age (Years)</label>
+                  <input
+                    name="age"
+                    type="number"
+                    value={editFormData.age}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Gender</label>
+                  <select name="gender" value={editFormData.gender} onChange={handleEditChange}>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Weight (Kg)</label>
+                  <input
+                    name="weight"
+                    type="number"
+                    value={editFormData.weight}
+                    onChange={handleEditChange}
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Health Status</label>
+                <input
+                  name="healthStatus"
+                  value={editFormData.healthStatus}
+                  onChange={handleEditChange}
+                  placeholder="e.g. Healthy"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Cattle Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEditImageFile(e.target.files[0])}
+                />
+              </div>
+
+              <button type="submit" className="btn-submit-cattle" disabled={updating}>
+                {updating ? 'Saving...' : 'Save Changes'}
+              </button>
+            </form>
           </div>
         </div>
       )}
